@@ -81,6 +81,11 @@ func getNewVerInstallPkgPath() string {
 var checkDownloadInstallPkgLock = sync.Mutex{}
 
 func checkDownloadInstallPkg() {
+	// PRIVACY-PRO: Disabled to prevent auto-update and external connections
+	// No automatic downloads from update servers
+	return
+
+	/* Original code preserved but disabled
 	defer logging.Recover()
 
 	if skipNewVerInstallPkg() {
@@ -110,6 +115,7 @@ func checkDownloadInstallPkg() {
 	if !succ {
 		util.PushUpdateMsg(msgId, Conf.Language(104), 7000)
 	}
+	*/
 }
 
 func getUpdatePkg() (downloadPkgURLs []string, checksum string, err error) {

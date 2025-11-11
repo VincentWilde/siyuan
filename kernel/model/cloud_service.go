@@ -215,10 +215,18 @@ var (
 )
 
 func RefreshCheckJob() {
+	// PRIVACY-PRO: Disabled all external refresh checks to prevent connections
+	// - No user info refresh from server
+	// - No announcement downloads
+	// - No update package checks
+	return
+
+	/* Original code preserved but disabled
 	go refreshSubscriptionExpirationRemind()
 	go refreshUser()
 	go refreshAnnouncement()
 	go refreshCheckDownloadInstallPkg()
+	*/
 }
 
 func refreshSubscriptionExpirationRemind() {
@@ -256,6 +264,10 @@ func refreshSubscriptionExpirationRemind() {
 }
 
 func refreshUser() {
+	// PRIVACY-PRO: Disabled to prevent user info refresh from external server
+	return
+
+	/* Original code preserved but disabled
 	defer logging.Recover()
 
 	if nil != Conf.GetUser() {
@@ -265,9 +277,14 @@ func refreshUser() {
 		}
 		subscriptionExpirationReminded = false
 	}
+	*/
 }
 
 func refreshCheckDownloadInstallPkg() {
+	// PRIVACY-PRO: Disabled to prevent update checks
+	return
+
+	/* Original code preserved but disabled
 	defer logging.Recover()
 
 	time.Sleep(3 * time.Minute)
@@ -275,9 +292,14 @@ func refreshCheckDownloadInstallPkg() {
 	if "" != getNewVerInstallPkgPath() {
 		util.PushMsg(Conf.Language(62), 15*1000)
 	}
+	*/
 }
 
 func refreshAnnouncement() {
+	// PRIVACY-PRO: Disabled to prevent downloading announcements from external servers
+	return
+
+	/* Original code preserved but disabled
 	defer logging.Recover()
 
 	time.Sleep(1 * time.Minute)
@@ -325,9 +347,18 @@ func refreshAnnouncement() {
 	for _, newAnnouncement := range newAnnouncements {
 		util.PushMsg(fmt.Sprintf(Conf.Language(11), newAnnouncement.URL, newAnnouncement.Title), 0)
 	}
+	*/
 }
 
 func RefreshUser(token string) {
+	// PRIVACY-PRO: Disabled to prevent HTTP calls to user info server
+	// Load from local config only, no network requests
+	if "" != Conf.UserData {
+		Conf.SetUser(loadUserFromConf())
+	}
+	return
+
+	/* Original code preserved but disabled
 	threeDaysAfter := util.CurrentTimeMillis() + 1000*60*60*24*3
 	if "" == token {
 		if "" != Conf.UserData {
