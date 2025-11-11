@@ -21,8 +21,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
+	// PRIVACY-PRO: Commented unused imports after disabling external connections
+	// "os"
+	// "path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -416,6 +417,7 @@ Net:
 		logging.LogInfof("get cloud user elapsed [%dms]", elapsed)
 	}
 	return
+	*/
 }
 
 func loadUserFromConf() *conf.User {
