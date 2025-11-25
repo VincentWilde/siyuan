@@ -263,23 +263,83 @@ func checkFileSysStatus() {
 			}
 
 			checkFilenames := bytes.Buffer{}
+			skippedFiles := []string{}
 			for _, entry := range entries {
 				if !entry.IsDir() && strings.Contains(entry.Name(), "check_") {
-					checkFilenames.WriteString(entry.Name())
+					// Skip macOS system files that may be created by Spotlight, FSEvents, etc.
+					name := entry.Name()
+					if strings.HasPrefix(name, ".DS_Store") ||
+						strings.HasPrefix(name, "._") ||
+						strings.HasPrefix(name, ".Spotlight-") ||
+						strings.HasPrefix(name, ".fseventsd") ||
+						strings.HasPrefix(name, ".TemporaryItems") ||
+						strings.HasPrefix(name, ".Trashes") ||
+						strings.HasPrefix(name, ".DocumentRevisions") ||
+						strings.HasPrefix(name, ".PKInstallSandboxManager") ||
+						strings.HasSuffix(name, ".tmp") ||
+						strings.HasSuffix(name, ".temp") {
+						skippedFiles = append(skippedFiles, name)
+						continue
+					}
+					checkFilenames.WriteString(name)
 					checkFilenames.WriteString("\n")
 				}
 			}
+
+			if len(skippedFiles) > 0 {
+				logging.LogInfof("file system check: skipped %d system files: %v", len(skippedFiles), skippedFiles)
+			}
+
 			lines := strings.Split(strings.TrimSpace(checkFilenames.String()), "\n")
 			if 1 < len(lines) {
-				buf := bytes.Buffer{}
-				for _, line := range lines {
-					buf.WriteString("  ")
-					buf.WriteString(line)
-					buf.WriteString("\n")
+				// On macOS, file operations can be delayed by system processes
+				// Wait a moment and check again before declaring it a fatal error
+				logging.LogWarnf("file system check detected %d files on first check, waiting 500ms to verify", len(lines))
+				time.Sleep(500 * time.Millisecond)
+
+				// Re-check the directory
+				entries2, err2 := os.ReadDir(dir)
+				if err2 != nil {
+					ReportFileSysFatalError(err2)
+					return
 				}
-				output := buf.String()
-				ReportFileSysFatalError(fmt.Errorf("dir [%s] has more than 1 file:\n%s", dir, output))
-				return
+
+				checkFilenames2 := bytes.Buffer{}
+				for _, entry := range entries2 {
+					if !entry.IsDir() && strings.Contains(entry.Name(), "check_") {
+						name := entry.Name()
+						if strings.HasPrefix(name, ".DS_Store") ||
+							strings.HasPrefix(name, "._") ||
+							strings.HasPrefix(name, ".Spotlight-") ||
+							strings.HasPrefix(name, ".fseventsd") ||
+							strings.HasPrefix(name, ".TemporaryItems") ||
+							strings.HasPrefix(name, ".Trashes") ||
+							strings.HasPrefix(name, ".DocumentRevisions") ||
+							strings.HasPrefix(name, ".PKInstallSandboxManager") ||
+							strings.HasSuffix(name, ".tmp") ||
+							strings.HasSuffix(name, ".temp") {
+							continue
+						}
+						checkFilenames2.WriteString(name)
+						checkFilenames2.WriteString("\n")
+					}
+				}
+
+				lines2 := strings.Split(strings.TrimSpace(checkFilenames2.String()), "\n")
+				if 1 < len(lines2) {
+					buf := bytes.Buffer{}
+					for _, line := range lines2 {
+						buf.WriteString("  ")
+						buf.WriteString(line)
+						buf.WriteString("\n")
+					}
+					output := buf.String()
+					logging.LogWarnf("file system check still detected multiple files after retry (confirmed sync conflict):\n%s", output)
+					ReportFileSysFatalError(fmt.Errorf("dir [%s] has more than 1 file:\n%s", dir, output))
+					return
+				} else {
+					logging.LogInfof("file system check: transient state resolved, continuing")
+				}
 			}
 		}
 
