@@ -18,12 +18,8 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
-
-	"github.com/siyuan-note/httpclient"
-	"github.com/siyuan-note/logging"
 )
 
 var cachedRhyResult = map[string]interface{}{}
@@ -31,6 +27,11 @@ var rhyResultCacheTime int64
 var rhyResultLock = sync.Mutex{}
 
 func GetRhyResult(force bool) (map[string]interface{}, error) {
+	// PRIVACY-PRO: Disabled to prevent external connections to cloud server
+	// Blocks version checks, announcements, and bazaar stage index fetching
+	return nil, errors.New("external connections disabled")
+
+	/* Original code preserved but disabled
 	rhyResultLock.Lock()
 	defer rhyResultLock.Unlock()
 
@@ -57,6 +58,7 @@ func GetRhyResult(force bool) (map[string]interface{}, error) {
 	}
 	rhyResultCacheTime = now
 	return cachedRhyResult, nil
+	*/
 }
 
 func RefreshRhyResultJob() {

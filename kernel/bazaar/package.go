@@ -17,7 +17,6 @@
 package bazaar
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -29,7 +28,6 @@ import (
 	"github.com/88250/gulu"
 	"github.com/88250/lute"
 	"github.com/araddon/dateparse"
-	"github.com/imroc/req/v3"
 	gcache "github.com/patrickmn/go-cache"
 	"github.com/siyuan-note/filelock"
 	"github.com/siyuan-note/httpclient"
@@ -637,12 +635,17 @@ func isOutdatedTemplate(template *Template, bazaarTemplates []*Template) bool {
 }
 
 func isBazzarOnline() (ret bool) {
+	// PRIVACY-PRO: Disabled to prevent external connections to bazaar server
+	return false
+
+	/* Original code preserved but disabled
 	// Improve marketplace loading when offline https://github.com/siyuan-note/siyuan/issues/12050
 	ret = util.IsOnline(util.BazaarOSSServer, true, 3000)
 	if !ret {
 		util.PushErrMsg(util.Langs[util.Lang][24], 5000)
 	}
 	return
+	*/
 }
 
 func GetPackageREADME(repoURL, repoHash, packageType string) (ret string) {
@@ -721,6 +724,10 @@ var (
 )
 
 func downloadPackage(repoURLHash string, pushProgress bool, systemID string) (data []byte, err error) {
+	// PRIVACY-PRO: Disabled to prevent external connections to bazaar OSS server
+	return nil, errors.New("bazaar downloads disabled: external connections are blocked")
+
+	/* Original code preserved but disabled
 	packageLocksLock.Lock()
 	defer packageLocksLock.Unlock()
 
@@ -756,9 +763,14 @@ func downloadPackage(repoURLHash string, pushProgress bool, systemID string) (da
 
 	go incPackageDownloads(repoURLHash, systemID)
 	return
+	*/
 }
 
 func incPackageDownloads(repoURLHash, systemID string) {
+	// PRIVACY-PRO: Disabled to prevent telemetry/tracking connections to cloud server
+	return
+
+	/* Original code preserved but disabled
 	if strings.Contains(repoURLHash, ".md") || "" == systemID {
 		return
 	}
@@ -770,6 +782,7 @@ func incPackageDownloads(repoURLHash, systemID string) {
 			"systemID": systemID,
 			"repo":     repo,
 		}).Post(u)
+	*/
 }
 
 func uninstallPackage(installPath string) (err error) {
@@ -848,6 +861,10 @@ var bazaarIndexCacheTime int64
 var bazaarIndexLock = sync.Mutex{}
 
 func getBazaarIndex() map[string]*bazaarPackage {
+	// PRIVACY-PRO: Disabled to prevent external connections to bazaar stat server
+	return cachedBazaarIndex
+
+	/* Original code preserved but disabled
 	bazaarIndexLock.Lock()
 	defer bazaarIndexLock.Unlock()
 
@@ -869,6 +886,7 @@ func getBazaarIndex() map[string]*bazaarPackage {
 	}
 	bazaarIndexCacheTime = now
 	return cachedBazaarIndex
+	*/
 }
 
 // defaultMinAppVersion 如果集市包中缺失 minAppVersion 项，则使用该值作为最低支持的版本号，小于该版本号时不显示集市包
